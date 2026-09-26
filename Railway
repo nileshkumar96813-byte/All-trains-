@@ -124,3 +124,20 @@ def main():
 
 if __name__ == "__main__":
     main()
+from gtts import gTTS
+from playsound import playsound
+import os
+
+print("अनाउंसमेंट ऑडियो तैयार हो रहा है... कृपया रुकें।")
+text = "कृपया ध्यान दीजिए, राजधानी एक्सप्रेस प्लेटफॉर्म नंबर 1 पर आ रही है।"
+
+# गूगल वॉइस इंजन से ऑडियो बनाना
+tts = gTTS(text=text, lang='hi', slow=False)
+tts.save("announcement.mp3")
+
+# ऑडियो प्ले करना
+print("ऑडियो प्ले हो रहा है...")
+playsound("announcement.mp3")
+
+# फाइल डिलीट करना
+os.remove("announcement.mp3")
