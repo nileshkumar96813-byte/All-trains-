@@ -1,1 +1,126 @@
+import time
+import sys
+import pyttsx3
 
+# =========================================================================
+# 1. टेक्स्ट-टू-स्पीच (TTS) अनाउंसमेंट इंजन सेटअप
+# =========================================================================
+try:
+    engine = pyttsx3.init()
+    # रेलवे स्टेशन जैसी थोड़ी धीमी और साफ आवाज के लिए स्पीड (Rate) सेट करें
+    engine.setProperty('rate', 145)
+    # आवाज का वॉल्यूम फुल (1.0) करें
+    engine.setProperty('volume', 1.0)
+except Exception as e:
+    print(f"Error: स्पीच इंजन चालू नहीं हो सका। विवरण: {e}")
+    sys.exit(1)
+
+def speak(text, lang_code='hi'):
+    """कंप्यूटर के स्पीकर पर स्टेशन की आवाज में टेक्स्ट को बोलना"""
+    try:
+        voices = engine.getProperty('voices')
+        if len(voices) > 0:
+            # सुरक्षित तरीका: अगर सिस्टम में दूसरी भाषा नहीं है, तो क्रैश होने से बचाएगा
+            if lang_code == 'hi' and len(voices) > 1:
+                engine.setProperty('voice', voices[1].id)
+            else:
+                engine.setProperty('voice', voices[0].id)
+                
+        engine.say(text)
+        engine.runAndWait()
+    except Exception as voice_error:
+        print(f"⚠️ आवाज प्ले करने में दिक्कत आई: {voice_error}")
+
+# =========================================================================
+# 2. रेलवे स्टेशन सेंट्रल डेटाबेस (ट्रेन की लाइव जानकारियां)
+# =========================================================================
+TRAIN_DATABASE = {
+    "1": {
+        "number": "1 2 4 2 4", 
+        "name": "Rajdhani Express",
+        "from_station": "New Delhi",
+        "to_station": "Dibrugarh",
+        "platform": "1"
+    },
+    "2": {
+        "number": "1 2 0 0 2",
+        "name": "Shatabdi Express",
+        "from_station": "New Delhi",
+        "to_station": "Bhopal",
+        "platform": "3"
+    },
+    "3": {
+        "number": "1 2 9 5 2",
+        "name": "Mumbai Rajdhani",
+        "from_station": "New Delhi",
+        "to_station": "Mumbai Central",
+        "platform": "2"
+    }
+}
+
+# =========================================================================
+# 3. ट्रैक सेंसर ट्रिगर और ऑटोमैटिक अनाउंसमेंट फंक्शन
+# =========================================================================
+def trigger_track_sensor(choice):
+    if choice not in TRAIN_DATABASE:
+        print("\n[⚠️ सिमुलेशन एरर]: इस ट्रेन का डेटाबेस मौजूद नहीं है।")
+        return
+
+    train = TRAIN_DATABASE[choice]
+    print(f"\n[📡 ट्रैक सेंसर एक्टिव]: ट्रेन नंबर {train['number'].replace(' ', '')} आउटर सिग्नल पार कर चुकी है...")
+    time.sleep(1) 
+    
+    print("\n=======================================================")
+    print("📢 लाइव ब्रॉडकास्ट: लाउडस्पीकर पर अनाउंसमेंट चालू है...")
+    print("=======================================================")
+
+    # --- 1. हिंदी अनाउंसमेंट ---
+    hindi_announcement = (
+        f"कृपया ध्यान दीजिए। गाड़ी संख्या. {train['number']}. "
+        f"{train['name']}। जो {train['from_station']} से चलकर {train['to_station']} को जाने वाली, "
+        f"कुछ ही समय में प्लेटफॉर्म नंबर {train['platform']} पर आ रही है।"
+    )
+    print(f"\n[हिंदी]: {hindi_announcement}")
+    speak(hindi_announcement, lang_code='hi')
+    
+    time.sleep(1.5) 
+
+    # --- 2. English Announcement ---
+    english_announcement = (
+        f"May I have your attention please. Train number. {train['number']}. "
+        f"{train['name']}, traveling from {train['from_station']} to {train['to_station']}, "
+        f"is approaching platform number {train['platform']}."
+    )
+    print(f"\n[English]: {english_announcement}")
+    speak(english_announcement, lang_code='en')
+    
+    print("\n-------------------------------------------------------")
+    print("✓ अनाउंसमेंट पूरी हो चुकी है। सिस्टम वापस ट्रैक मॉनिटरिंग पर है।")
+    print("-------------------------------------------------------")
+
+# =========================================================================
+# 4. यूज़र इंटरफेस और मेन्यू लूप
+# =========================================================================
+def main():
+    while True:
+        print("\n\n====== भारतीय रेलवे: ऑटोमैटिक स्टेशन अनाउंसमेंट सिस्टम ======")
+        print("सिम्युलेट करने के लिए किसी ट्रेन का चयन करें (यह सेंसर ट्रिगर की तरह काम करेगा):")
+        print("1. 12424 - Rajdhani Express (New Delhi to Dibrugarh) - प्लेटफॉर्म 1")
+        print("2. 12002 - Shatabdi Express (New Delhi to Bhopal) - प्लेटफॉर्म 3")
+        print("3. 12952 - Mumbai Rajdhani (New Delhi to Mumbai Central) - प्लेटफॉर्म 2")
+        print("4. सिस्टम बंद करें (Exit)")
+        print("================================================================")
+        
+        user_input = input("ट्रेन नंबर चुनने के लिए 1, 2, 3 या 4 दबाएं: ").strip()
+        
+        if user_input == "4":
+            print("\nरेलवे अनाउंसमेंट सिस्टम को बंद किया जा रहा है... धन्यवाद।")
+            break
+        elif user_input in ["1", "2", "3"]:
+            trigger_track_sensor(user_input)
+        else:
+            print("\n❌ गलत विकल्प! कृपया केवल 1, 2, 3 या 4 ही टाइप करें।")
+            time.sleep(1)
+
+if __name__ == "__main__":
+    main()
